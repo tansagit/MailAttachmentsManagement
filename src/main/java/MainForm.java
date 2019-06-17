@@ -289,6 +289,16 @@ public class MainForm extends JFrame {
 			return data;
 		}
 
+		public boolean isFileExist(String directory, String fileName) {
+			File dir = new File(directory);
+			File[] files = dir.listFiles();
+			for (int i = 0; i < files.length; i++) {
+				if (files[i].getName().equals(fileName))
+					return true;
+			}
+			return false;
+		}
+
 		@Override
 		protected Integer doInBackground() throws Exception {
 			// TODO Auto-generated method stub
@@ -340,13 +350,12 @@ public class MainForm extends JFrame {
 						// store attachment file name, separated by comma
 						String attachFiles = "";
 
-						//if mail dont have attachments
-						if(contentType.contains("multipart/ALTERNATIVE")) {
+						// if mail dont have attachments
+						if (contentType.contains("multipart/ALTERNATIVE")) {
 							publish("No attachment to download in " + fromEmail + " : " + subject + "\n\n");
 							setProgress((i + 1) * 100 / size);
 							this.progressBarUpdate(size);
-						}
-						else if (contentType.contains("multipart")) {
+						} else if (contentType.contains("multipart")) {
 							Multipart multiPart = (Multipart) message.getContent();
 							int numberOfParts = multiPart.getCount();
 							for (int partCount = 0; partCount < numberOfParts; partCount++) {
@@ -355,25 +364,50 @@ public class MainForm extends JFrame {
 									// this part is attachment
 									String fileName = part.getFileName();
 									attachFiles += fileName + ", ";
-									String fileURL = saveDirectory + File.separator + fileName;
 
-									// download attachment from mail
-									part.saveFile(fileURL);
-									publish("Downloaded file: " + fileName + "  from  " + fromEmail);
+									// if file is not exist
+									if (!isFileExist(saveDirectory, fileName)) {
+										// download attachment from mail
+										String fileURL = saveDirectory + File.separator + fileName;
+										part.saveFile(fileURL);
+										publish("Downloaded file: " + fileName + "  from  " + fromEmail);
 
-									// upload to google drive
-									driveAccess.UploadFile(driveFolderId, fileURL, fileName);
-									publish("  ======> Uploaded to drive");
+										// upload to google drive
+										driveAccess.UploadFile(driveFolderId, fileURL, fileName);
+										publish("  ======> Uploaded to drive");
 
-									// update sheet
-									String attachmentURL = driveAccess.getFileURL();
-									List<List<Object>> values = this.addData(fromEmail, attachmentURL);
-									sheetAccess.UpdateSheet(sheetId, sheetRange, values);
-									// System.out.println("Da update sheet");
-									publish("  ======> Updated to sheet\n\n");
+										// update sheet
+										String attachmentURL = driveAccess.getFileURL();
+										List<List<Object>> values = this.addData(fromEmail, attachmentURL);
+										sheetAccess.UpdateSheet(sheetId, sheetRange, values);
+										// System.out.println("Da update sheet");
+										publish("  ======> Updated to sheet\n\n");
 
-									setProgress((i + 1) * 100 / size);
-									this.progressBarUpdate(size);
+										setProgress((i + 1) * 100 / size);
+										this.progressBarUpdate(size);
+									}
+									// if existed
+									else {
+
+										String fileURL = saveDirectory + File.separator
+												+ String.valueOf(Math.random() + "_" + fileName);
+										part.saveFile(fileURL);
+										publish("Downloaded file: " + fileName + "  from  " + fromEmail);
+
+										// upload to google drive
+										driveAccess.UploadFile(driveFolderId, fileURL, fileName);
+										publish("  ======> Uploaded to drive");
+
+										// update sheet
+										String attachmentURL = driveAccess.getFileURL();
+										List<List<Object>> values = this.addData(fromEmail, attachmentURL);
+										sheetAccess.UpdateSheet(sheetId, sheetRange, values);
+										// System.out.println("Da update sheet");
+										publish("  ======> Updated to sheet\n\n");
+
+										setProgress((i + 1) * 100 / size);
+										this.progressBarUpdate(size);
+									}
 
 								} else {
 									// this part may be the message content
