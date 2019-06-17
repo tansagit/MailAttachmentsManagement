@@ -337,6 +337,7 @@ public class MainForm extends JFrame {
 					publish("No message new!\n\n");
 				} else {
 					publish("Found " + size + " messages new\n\n");
+					publish("DOWNLOADING............\n\n");
 					for (int i = 0; i < size; i++) {
 						Message message = arrayMessages[i];
 						Address[] fromAddress = message.getFrom();

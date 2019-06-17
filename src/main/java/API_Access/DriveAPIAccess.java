@@ -35,7 +35,7 @@ public class DriveAPIAccess {
 	private static final String TOKENS_DIRECTORY_PATH = "tokens";
 
 	private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
-	private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+	private static final String CREDENTIALS_FILE_PATH = "/drive_credentials.json";
 
 	private String fileURL;
 	
