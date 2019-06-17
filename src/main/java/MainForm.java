@@ -82,8 +82,6 @@ public class MainForm extends JFrame {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
-		final String host = "pop.gmail.com";
-		final String port = "995";
 
 		JLabel lblEnterUser = new JLabel("Enter email & password to download attachments");
 		lblEnterUser.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -107,7 +105,7 @@ public class MainForm extends JFrame {
 		txtSaveDir = new JTextField();
 		txtSaveDir.setColumns(10);
 		txtSaveDir.setBounds(368, 63, 303, 32);
-		txtSaveDir.setText("E:\\Attachments");
+		txtSaveDir.setText("E:\\Attachments");		//default directory to save files
 		contentPane.add(txtSaveDir);
 
 		JButton btnBrowser = new JButton("Browser");
@@ -122,7 +120,7 @@ public class MainForm extends JFrame {
 		txtFolder = new JTextField();
 		txtFolder.setColumns(10);
 		txtFolder.setBounds(366, 108, 439, 32);
-		txtFolder.setText("1xGx9IUB9YUNhw5-w2WfGPUS0-T0F3ja-");
+		txtFolder.setText("1xGx9IUB9YUNhw5-w2WfGPUS0-T0F3ja-");		//default google drive folder to upload files : Resumes
 		contentPane.add(txtFolder);
 
 		JLabel lblEnterSheetId = new JLabel("Enter sheet id to update");
@@ -133,10 +131,10 @@ public class MainForm extends JFrame {
 		txtSheet = new JTextField();
 		txtSheet.setColumns(10);
 		txtSheet.setBounds(368, 153, 437, 32);
-		txtSheet.setText("1ret6WEZyf1O7Pu_YCNDB4jAXGxgIV2KgUuZDE82kDEE");
-		contentPane.add(txtSheet);
+		txtSheet.setText("1ret6WEZyf1O7Pu_YCNDB4jAXGxgIV2KgUuZDE82kDEE");	//default google sheet to write : Resumes management
+		contentPane.add(txtSheet);	
 
-		JLabel lblStartCell = new JLabel("Start cell");
+		JLabel lblStartCell = new JLabel("Start cell");						
 		lblStartCell.setBounds(817, 158, 80, 22);
 		contentPane.add(lblStartCell);
 
@@ -144,7 +142,7 @@ public class MainForm extends JFrame {
 		txtRange.setHorizontalAlignment(SwingConstants.CENTER);
 		txtRange.setColumns(10);
 		txtRange.setBounds(879, 153, 36, 32);
-		txtRange.setText("C5");
+		txtRange.setText("C5");												//first cell of information table
 		contentPane.add(txtRange);
 
 		JScrollPane scrollPane = new JScrollPane();
@@ -293,19 +291,7 @@ public class MainForm extends JFrame {
 		@Override
 		protected Integer doInBackground() throws Exception {
 			// TODO Auto-generated method stub
-//			APIAccess access = new APIAccess();
-//			final File folder = new File("E:\\Attachments");
-//			String folderId = "1JP6Iz3WadNstEcUOKEqaw16sZy-p9yuZ";
-//			int size = folder.listFiles().length;
-//			
-//			for(int i = 0; i < size; i++) {
-//				File file = folder.listFiles()[i];
-//				String fileName = file.getName();
-//	        	String fileURL = folder + File.separator + file.getName();
-//				access.uploadFile(folderId, fileURL, fileName);
-//				publish("Uploaded file: " + fileName);
-//				setProgress((i + 1) * 100 / size);
-//			}
+
 			int size = 0;
 			DriveAPIAccess driveAccess = new DriveAPIAccess();
 			SheetAPIAccess sheetAccess = new SheetAPIAccess();
@@ -331,10 +317,10 @@ public class MainForm extends JFrame {
 				IMAPFolder ifolder = (IMAPFolder) folderInbox;
 				ifolder.open(Folder.READ_WRITE);
 
-				Message[] arrayMessages = ifolder.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
-				size = arrayMessages.length;
+				Message[] arrayMessages = ifolder.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));	//select unread mails
+				size = arrayMessages.length;				//size = number of unread mails
 				if (size == 0) {
-					System.out.println("No messages found");
+					System.out.println("No messages new!");
 					publish("No message new!");
 				}
 
@@ -411,6 +397,7 @@ public class MainForm extends JFrame {
 				ex.printStackTrace();
 			} catch (MessagingException ex) {
 				System.out.println("Could not connect to the message store, wrong email or password!");
+				JOptionPane.showMessageDialog(null, "Could not connect to message store, please check email or password again!", "Access Denied", JOptionPane.ERROR_MESSAGE);
 				ex.printStackTrace();
 			}
 
@@ -429,7 +416,7 @@ public class MainForm extends JFrame {
 		protected void done() {
 			textArea.append("\t\t\t-------------COMPLETE------------");
 			try {
-				JOptionPane.showMessageDialog(null, "DONE!!!", "Upload status", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(null, "DONE!!!", "Progress status", JOptionPane.INFORMATION_MESSAGE);
 			} catch (Exception ignore) {
 			}
 		}
