@@ -105,7 +105,7 @@ public class MainForm extends JFrame {
 		txtSaveDir = new JTextField();
 		txtSaveDir.setColumns(10);
 		txtSaveDir.setBounds(368, 63, 303, 32);
-		txtSaveDir.setText("E:\\Attachments");		//default directory to save files
+		txtSaveDir.setText("E:\\Attachments"); // default directory to save files
 		contentPane.add(txtSaveDir);
 
 		JButton btnBrowser = new JButton("Browser");
@@ -120,7 +120,7 @@ public class MainForm extends JFrame {
 		txtFolder = new JTextField();
 		txtFolder.setColumns(10);
 		txtFolder.setBounds(366, 108, 439, 32);
-		txtFolder.setText("1xGx9IUB9YUNhw5-w2WfGPUS0-T0F3ja-");		//default google drive folder to upload files : Resumes
+		txtFolder.setText("1xGx9IUB9YUNhw5-w2WfGPUS0-T0F3ja-"); // default google drive folder to upload files : Resumes
 		contentPane.add(txtFolder);
 
 		JLabel lblEnterSheetId = new JLabel("Enter sheet id to update");
@@ -131,10 +131,11 @@ public class MainForm extends JFrame {
 		txtSheet = new JTextField();
 		txtSheet.setColumns(10);
 		txtSheet.setBounds(368, 153, 437, 32);
-		txtSheet.setText("1ret6WEZyf1O7Pu_YCNDB4jAXGxgIV2KgUuZDE82kDEE");	//default google sheet to write : Resumes management
-		contentPane.add(txtSheet);	
+		txtSheet.setText("1ret6WEZyf1O7Pu_YCNDB4jAXGxgIV2KgUuZDE82kDEE"); // default google sheet to write : Resumes
+																			// management
+		contentPane.add(txtSheet);
 
-		JLabel lblStartCell = new JLabel("Start cell");						
+		JLabel lblStartCell = new JLabel("Start cell");
 		lblStartCell.setBounds(817, 158, 80, 22);
 		contentPane.add(lblStartCell);
 
@@ -142,7 +143,7 @@ public class MainForm extends JFrame {
 		txtRange.setHorizontalAlignment(SwingConstants.CENTER);
 		txtRange.setColumns(10);
 		txtRange.setBounds(879, 153, 36, 32);
-		txtRange.setText("C5");												//first cell of information table
+		txtRange.setText("C5"); // first cell of information table
 		contentPane.add(txtRange);
 
 		JScrollPane scrollPane = new JScrollPane();
@@ -205,9 +206,9 @@ public class MainForm extends JFrame {
 				} else if (txtRange.getText().isEmpty()) {
 					JOptionPane.showMessageDialog(null, "Pls enter start cell!");
 				} else {
-					
+
 					btnStart.setEnabled(false);
-					textArea.setText("SCANNING........\n");
+					textArea.setText("SCANNING........\t");
 					String userName = txtEmail.getText().toString();
 					String password = new String(txtPassword.getPassword());
 					String saveDirectory = txtSaveDir.getText().trim();
@@ -215,7 +216,7 @@ public class MainForm extends JFrame {
 					String sheetId = txtSheet.getText();
 					String sheetRange = txtRange.getText();
 
-					//start swing worker
+					// start swing worker
 					WorkerDoSomething worker = new WorkerDoSomething(userName, password, saveDirectory, driveFolderId,
 							sheetId, sheetRange, progressBar, textArea);
 					worker.addPropertyChangeListener(new ProgressListener(progressBar));
@@ -317,77 +318,90 @@ public class MainForm extends JFrame {
 				IMAPFolder ifolder = (IMAPFolder) folderInbox;
 				ifolder.open(Folder.READ_WRITE);
 
-				Message[] arrayMessages = ifolder.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));	//select unread mails
-				size = arrayMessages.length;				//size = number of unread mails
+				Message[] arrayMessages = ifolder.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false)); // select
+																											// unread
+																											// mails
+				size = arrayMessages.length; // size = number of unread mails
 				if (size == 0) {
 					System.out.println("No messages new!");
-					publish("No message new!");
-				}
+					publish("No message new!\n\n");
+				} else {
+					publish("Found " + size + " messages new\n\n");
+					for (int i = 0; i < size; i++) {
+						Message message = arrayMessages[i];
+						Address[] fromAddress = message.getFrom();
+						String fromEmail = fromAddress[0].toString();
+						String subject = message.getSubject();
+						String sentDate = message.getSentDate().toString();
 
-				for (int i = 0; i < size; i++) {
-					Message message = arrayMessages[i];
-					Address[] fromAddress = message.getFrom();
-					String fromEmail = fromAddress[0].toString();
-					String subject = message.getSubject();
-					String sentDate = message.getSentDate().toString();
+						String contentType = message.getContentType();
+						String messageContent = "";
 
-					String contentType = message.getContentType();
-					String messageContent = "";
+						// store attachment file name, separated by comma
+						String attachFiles = "";
 
-					// store attachment file name, separated by comma
-					String attachFiles = "";
+						//if mail dont have attachments
+						if(contentType.contains("multipart/ALTERNATIVE")) {
+							publish("No attachment to download in " + fromEmail + " : " + subject + "\n\n");
+							setProgress((i + 1) * 100 / size);
+							this.progressBarUpdate(size);
+						}
+						else if (contentType.contains("multipart")) {
+							Multipart multiPart = (Multipart) message.getContent();
+							int numberOfParts = multiPart.getCount();
+							for (int partCount = 0; partCount < numberOfParts; partCount++) {
+								MimeBodyPart part = (MimeBodyPart) multiPart.getBodyPart(partCount);
+								if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition())) {
+									// this part is attachment
+									String fileName = part.getFileName();
+									attachFiles += fileName + ", ";
+									String fileURL = saveDirectory + File.separator + fileName;
 
-					if (contentType.contains("multipart")) {
-						Multipart multiPart = (Multipart) message.getContent();
-						int numberOfParts = multiPart.getCount();
-						for (int partCount = 0; partCount < numberOfParts; partCount++) {
-							MimeBodyPart part = (MimeBodyPart) multiPart.getBodyPart(partCount);
-							if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition())) {
-								// this part is attachment
-								String fileName = part.getFileName();
-								attachFiles += fileName + ", ";
-								String fileURL = saveDirectory + File.separator + fileName;
+									// download attachment from mail
+									part.saveFile(fileURL);
+									publish("Downloaded file: " + fileName + "  from  " + fromEmail);
 
-								// download attachment from mail
-								part.saveFile(fileURL);
-								publish("Downloaded file: " + fileName + "  from  " + fromEmail);
+									// upload to google drive
+									driveAccess.UploadFile(driveFolderId, fileURL, fileName);
+									publish("  ======> Uploaded to drive");
 
-								// upload to google drive
-								driveAccess.UploadFile(driveFolderId, fileURL, fileName);
-								publish("  ======> Uploaded to drive");
+									// update sheet
+									String attachmentURL = driveAccess.getFileURL();
+									List<List<Object>> values = this.addData(fromEmail, attachmentURL);
+									sheetAccess.UpdateSheet(sheetId, sheetRange, values);
+									// System.out.println("Da update sheet");
+									publish("  ======> Updated to sheet\n\n");
 
-								// update sheet
-								String attachmentURL = driveAccess.getFileURL();
-								List<List<Object>> values = this.addData(fromEmail, attachmentURL);
-								sheetAccess.UpdateSheet(sheetId, sheetRange, values);
-								// System.out.println("Da update sheet");
-								publish("  ======> Updated to sheet\n\n");
+									setProgress((i + 1) * 100 / size);
+									this.progressBarUpdate(size);
 
-								setProgress((i + 1) * 100 / size);
-								this.progressBarUpdate(size);
+								} else {
+									// this part may be the message content
+									messageContent = part.getContent().toString();
+								}
+							}
 
-							} else {
-								// this part may be the message content
-								messageContent = part.getContent().toString();
+							if (attachFiles.length() > 1) {
+								attachFiles = attachFiles.substring(0, attachFiles.length() - 2);
 							}
 						}
 
-						if (attachFiles.length() > 1) {
-							attachFiles = attachFiles.substring(0, attachFiles.length() - 2);
+						else if (contentType.contains("text/plain") || contentType.contains("text/html")) {
+							Object content = message.getContent();
+							if (content != null) {
+								messageContent = content.toString();
+							}
 						}
-					}
 
-					else if (contentType.contains("text/plain") || contentType.contains("text/html")) {				
-						System.out.println("No attachment to download in this mail");
+//						System.out.println("Message #" + (i + 1) + ":");
+//						System.out.println("\t From: " + fromEmail);
+//						System.out.println("\t Subject: " + subject);
+//						System.out.println("\t Sent Date: " + sentDate);
+//						System.out.println("\t Message: " + messageContent);
+//						System.out.println("\t Attachments: " + attachFiles);
 					}
-
-//					System.out.println("Message #" + (i + 1) + ":");
-//					System.out.println("\t From: " + fromEmail);
-//					System.out.println("\t Subject: " + subject);
-//					System.out.println("\t Sent Date: " + sentDate);
-//					System.out.println("\t Message: " + messageContent);
-//					System.out.println("\t Attachments: " + attachFiles);
 				}
+
 				// disconnect
 				ifolder.close(false);
 				store.close();
@@ -397,7 +411,9 @@ public class MainForm extends JFrame {
 				ex.printStackTrace();
 			} catch (MessagingException ex) {
 				System.out.println("Could not connect to the message store, wrong email or password!");
-				JOptionPane.showMessageDialog(null, "Could not connect to message store, please check email or password again!", "Access Denied", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null,
+						"Could not connect to message store, please check email or password again!", "Access Denied",
+						JOptionPane.ERROR_MESSAGE);
 				ex.printStackTrace();
 			}
 
@@ -416,7 +432,8 @@ public class MainForm extends JFrame {
 		protected void done() {
 			textArea.append("\t\t\t-------------COMPLETE------------");
 			try {
-				JOptionPane.showMessageDialog(null, "DONE!!!", "Progress status", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(null, "DONE!!!", "Attachments Processing Status",
+						JOptionPane.INFORMATION_MESSAGE);
 			} catch (Exception ignore) {
 			}
 		}
